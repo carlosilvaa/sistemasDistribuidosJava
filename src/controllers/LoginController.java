@@ -3,31 +3,53 @@ package controllers;
 import java.sql.Connection;
 import java.sql.SQLException;
 import org.json.JSONObject;
-
 import dao.LoginDAO;
 import dao.UsuarioDAO;
 import entities.Login;
+import helper.ValidarFormulario;
+
 
 public class LoginController {
 	private LoginDAO loginDao;
+	private JSONObject request;
 
-	public LoginController(Connection conn) {
+	public LoginController(Connection conn, JSONObject request ) {
 		new UsuarioDAO(conn);
 		this.loginDao = new LoginDAO(conn);
+		this.request = request;
 	}
-
+	
 	public JSONObject loginCandidato(JSONObject json) {
 		String email = json.getString("email");
 		String senha = String.valueOf(json.getInt("senha"));
+		JSONObject responseValidacao = new JSONObject();
+		
+		boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+				 
+	     if (!hasKeys) {
+	    	 responseValidacao.put("operacao", "loginCandidato");
+	    	 responseValidacao.put("status", 401);
+	    	 responseValidacao.put("mensagem", "Informe todos os campos");
+
+	         return responseValidacao;
+	     }
+	
+	     JSONObject responseEmail;
+		  // Validar endereco de email
+		  responseEmail = ValidarFormulario.checarEmail(this.request, "loginCandidato");
+		  	if (responseEmail.getInt("status") != 200) {
+		      return responseEmail;
+		  }
+
 
 		try {
 			Login login = loginDao.loginCandidato(email, senha);
 			if (login != null) {
-				JSONObject response = new JSONObject();
-				response.put("operacao", "loginCandidato");
-				response.put("status", 200);
-				response.put("token", login.getToken());
-				return response;
+				JSONObject responseLogin = new JSONObject();
+				responseLogin.put("operacao", "loginCandidato");
+				responseLogin.put("status", 200);
+				responseLogin.put("token", login.getToken());
+				return responseLogin;
 			} else {
 				return errorResponse("loginCandidato", "Email ou senha inválidos");
 			}
@@ -39,6 +61,17 @@ public class LoginController {
 
 	public JSONObject logoutCandidato(JSONObject json) {
 		String token = json.getString("token");
+		JSONObject responseValidacao = new JSONObject();
+		
+		boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+		 
+	     if (!hasKeys) {
+	    	 responseValidacao.put("operacao", "loginCandidato");
+	    	 responseValidacao.put("status", 401);
+	    	 responseValidacao.put("mensagem", "Informe todos os campos");
+
+	         return responseValidacao;
+	     }
 		
 		try {
 			Login login = loginDao.logoutCandidato(token);

@@ -26,7 +26,6 @@ public class UsuarioDAO {
 
 		} finally {
 			BancoDados.finalizarStatement(st);
-			BancoDados.desconectar();
 		}
 	}
 
@@ -51,7 +50,6 @@ public class UsuarioDAO {
 		} finally {
 			BancoDados.finalizarStatement(st);
 			BancoDados.finalizarResultSet(rs);
-			BancoDados.desconectar();
 		}
 	}
 
@@ -96,7 +94,6 @@ public class UsuarioDAO {
 				}
 			} finally {
 				BancoDados.finalizarStatement(st);
-				BancoDados.desconectar();
 			}
 		} else {
 			System.out.println(
@@ -130,7 +127,6 @@ public class UsuarioDAO {
 		} finally {
 			BancoDados.finalizarStatement(st);
 			BancoDados.finalizarResultSet(rs);
-			BancoDados.desconectar();
 		}
 	}
 
