@@ -1,9 +1,7 @@
 package controllers;
 
 import entities.Usuario;
-import exceptions.InvalidLogin;
 import helper.ValidarFormulario;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -13,16 +11,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import dao.LoginDAO;
 import dao.UsuarioDAO;
 
 public class UsuarioController {
 
-	private Usuario usuario;
 	private UsuarioDAO usuarioDAO;
 	private JSONObject request;
+	private LoginDAO loginDAO;
 
 	public UsuarioController(Usuario usuario, Connection conn, JSONObject request) {
-		this.usuario = usuario;
 		this.usuarioDAO = new UsuarioDAO(conn);
 		this.request = request;
 
@@ -73,7 +71,7 @@ public class UsuarioController {
 				Usuario newCandidato = new Usuario();
 				newCandidato.setEmail(this.request.getString("email"));
 				newCandidato.setNome(this.request.getString("nome"));
-				newCandidato.setSenha(this.request.getInt("senha"));
+				newCandidato.setSenha(this.request.getString("senha"));
 
 				try {
 					this.usuarioDAO.cadastrarCandidato(newCandidato);
@@ -108,12 +106,12 @@ public class UsuarioController {
 		}
 	}
 
-	public JSONObject realizarLogin(JSONObject json) {
+	public JSONObject realizarLogin(JSONObject json) throws SQLException {
 		JSONObject responseValidacao = new JSONObject();
 
 		try {
 			String nome = json.getString("nome");
-			int senha = json.getInt("senha");
+			String senha = json.getString("senha");
 
 			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
 			if (!hasKeys) {
@@ -133,12 +131,8 @@ public class UsuarioController {
 				return responseSenha;
 			}
 
-			try {
-				usuario.realizarLogin(nome, senha);
-				return successResponse("loginCandidato", "Login realizado com sucesso!", "UUID");
-			} catch (InvalidLogin e) {
-				return errorResponse("loginCandidato", "Login ou senha incorretos", 401);
-			}
+			loginDAO.loginCandidato(nome, senha);
+			return successResponse("loginCandidato", "Login realizado com sucesso!", "UUID");
 		} catch (JSONException e) {
 			return errorResponse("realizarLogin", "JSON inválido", 404);
 		}
@@ -150,9 +144,9 @@ public class UsuarioController {
 		try {
 			String email = json.getString("email");
 
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email");
 			if (!hasKeys) {
-				responseValidacao.put("operacao", "loginCandidato");
+				responseValidacao.put("operacao", "apagarCandidato");
 				responseValidacao.put("status", 401);
 				responseValidacao.put("mensagem", "Informe todos os campos");
 				return responseValidacao;
@@ -229,11 +223,39 @@ public class UsuarioController {
 		}
 	}
 
-	public JSONObject buscarTodos() {
+	/*
+	 * public JSONObject buscarTodos() { JSONObject responseValidacao = new
+	 * JSONObject();
+	 * 
+	 * try { boolean hasKeys = ValidarFormulario.checarChaves(this.request,
+	 * "email"); if (!hasKeys) { responseValidacao.put("operacao",
+	 * "loginCandidato"); responseValidacao.put("status", 401);
+	 * responseValidacao.put("mensagem", "Informe todos os campos"); return
+	 * responseValidacao; }
+	 * 
+	 * JSONObject responseEmail = ValidarFormulario.checarEmail(this.request,
+	 * "loginCandidato"); if (responseEmail.getInt("status") != 200) { return
+	 * responseEmail; }
+	 * 
+	 * try { List<Usuario> usuarios = usuarioDAO.buscarTodos(); JSONArray jsonArray
+	 * = new JSONArray(); for (Usuario usuario : usuarios) { JSONObject jsonObject =
+	 * new JSONObject(); jsonObject.put("nome", usuario.getNome());
+	 * jsonObject.put("email", usuario.getEmail()); jsonObject.put("senha",
+	 * usuario.getSenha());
+	 * 
+	 * } return successResponse("visualizarCandidato", usuario.getNome(),
+	 * usuario.getEmail(), usuario.getSenha()); } catch (SQLException e) { return
+	 * errorResponse("visualizarCandidato", "Erro ao buscar todos os usuários",
+	 * 500); } } catch (JSONException e) { return errorResponse("buscarTodos",
+	 * "JSON inválido", 404); } }
+	 */
+
+	public JSONObject buscarPorEmail(JSONObject json) {
+
 		JSONObject responseValidacao = new JSONObject();
 
 		try {
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email");
 			if (!hasKeys) {
 				responseValidacao.put("operacao", "loginCandidato");
 				responseValidacao.put("status", 401);
@@ -241,52 +263,25 @@ public class UsuarioController {
 				return responseValidacao;
 			}
 
-			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "loginCandidato");
+			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "visualizarCandidato");
 			if (responseEmail.getInt("status") != 200) {
 				return responseEmail;
 			}
 
 			try {
-				List<Usuario> usuarios = usuarioDAO.buscarTodos();
-				JSONArray jsonArray = new JSONArray();
-				for (Usuario usuario : usuarios) {
-					JSONObject jsonObject = new JSONObject();
-					jsonObject.put("id", usuario.getId());
-					jsonObject.put("nome", usuario.getNome());
-					jsonObject.put("senha", usuario.getSenha());
-					jsonArray.put(jsonObject);
+				Usuario usuarios = usuarioDAO.buscarPorEmail(this.request.getString("email"));
+				if (usuarios != null) {
+					return successResponse("visualizarCandidato", usuarios.getNome(), usuarios.getEmail(),
+							usuarios.getSenha());
+				} else {
+					return errorResponse("visualizarCandidato", "Usuario nao encontrado", 404);
 				}
-				return successResponse("visualizarCandidato", jsonArray.toString());
 			} catch (SQLException e) {
+				System.out.println(e);
 				return errorResponse("visualizarCandidato", "Erro ao buscar todos os usuários", 500);
 			}
 		} catch (JSONException e) {
 			return errorResponse("buscarTodos", "JSON inválido", 404);
-		}
-	}
-
-	public JSONObject buscarPorEmail(JSONObject json) {
-
-		String email = json.getString("email");
-
-		if (email == null || email.isEmpty()) {
-			return errorResponse("buscarUsuarioPorEmail", "Email do usuário é obrigatório");
-		}
-
-		try {
-			Usuario usuario = usuarioDAO.buscarPorEmail(email);
-
-			if (usuario != null) {
-				JSONObject jsonUsuario = new JSONObject();
-				jsonUsuario.put("nome", usuario.getNome());
-				jsonUsuario.put("email", usuario.getEmail());
-				return successResponse("buscarPorEmail", jsonUsuario.toString());
-			} else {
-				return errorResponse("buscarPorEmail", "Nenhum usuário encontrado");
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return errorResponse("buscarPorEmail", "Erro ao buscar usuário", 500);
 		}
 	}
 
@@ -295,6 +290,16 @@ public class UsuarioController {
 		response.put("operacao", operacao);
 		response.put("status", 200);
 		response.put("mensagem", message);
+		return response;
+	}
+
+	private JSONObject successResponse(String operacao, String nome, String email, String senha) {
+		JSONObject response = new JSONObject();
+		response.put("operacao", operacao);
+		response.put("nome", nome);
+		response.put("email", email);
+		response.put("senha", senha);
+		response.put("status", 200);
 		return response;
 	}
 

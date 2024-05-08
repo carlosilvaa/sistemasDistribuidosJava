@@ -1,13 +1,9 @@
 
 package server;
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
-
 import org.json.JSONObject;
-
-import entities.Usuario;
 import routes.UsuarioRotas;
 
 public class ClientHandler extends Thread {
@@ -33,7 +29,7 @@ public class ClientHandler extends Thread {
                     out.println("Conexão encerrada.");
                     break;
                 }
-                JSONObject response = new UsuarioRotas(this.conn).handleRequest(new JSONObject(line));
+                JSONObject response = new UsuarioRotas(this.conn, new JSONObject(line)).handleRequest();
                 out.println(response.toString());
             }
         } catch (IOException e) {

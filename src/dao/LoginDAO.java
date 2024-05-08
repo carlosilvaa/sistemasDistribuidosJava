@@ -5,8 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
-
-import entities.Login;
+import org.json.JSONObject;
 
 public class LoginDAO {
 	private Connection conn;
@@ -14,7 +13,7 @@ public class LoginDAO {
 		this.conn = conn;
 	}
 
-	public Login loginCandidato(String email, String senha) throws SQLException {
+	public JSONObject loginCandidato(String email, String senha) throws SQLException {
 	    PreparedStatement st = null;
 	    ResultSet rs = null;
 
@@ -23,6 +22,7 @@ public class LoginDAO {
 	        st.setString(1, email);
 	        st.setString(2, senha);
 	        rs = st.executeQuery();
+	        JSONObject login = new JSONObject();
 
 	        if (rs.next()) {
 	            int idCandidato = rs.getInt("idCandidato");
@@ -33,16 +33,14 @@ public class LoginDAO {
 	            st.setString(2, token);
 	            st.executeUpdate();
 
-	            Login login = new Login();
-	            login.setOperacao("loginCandidato");
-	            login.setStatus(200);
-	            login.setToken(token);
+	            login.put("operacao","loginCandidato");
+	            login.put("status",200);
+	            login.put("token", token);
 	            return login;
 	        } else {
-	            Login login = new Login();
-	            login.setOperacao("loginCandidato");
-	            login.setStatus(401);
-	            login.setMensagem("Login ou senha incorretos");
+	            login.put("operacao","loginCandidato");
+	            login.put("status",401);
+	            login.put("mensagem", "Login ou senha incorretos");
 	            return login;
 	        }
 	    } finally {
@@ -52,7 +50,7 @@ public class LoginDAO {
 	}
 
 	
-	public Login logoutCandidato(String token) throws SQLException {
+	public JSONObject logoutCandidato(String token) throws SQLException {
 	    PreparedStatement st = null;    
 	    ResultSet rs = null;    
 
@@ -60,23 +58,21 @@ public class LoginDAO {
 	        st = conn.prepareStatement("SELECT * FROM logincandidato WHERE token = ?");
 	        st.setString(1, token);
 	        rs = st.executeQuery();
-
+	        JSONObject login = new JSONObject();
+	        
 	        if (rs.next()) {
 	            st = conn.prepareStatement("DELETE FROM logincandidato WHERE token = ?");
 	            st.setString(1, token);
 	            st.executeUpdate();
 
-	            Login login = new Login();
-	            login.setOperacao("logout");
-	            login.setStatus(200);
-	            login.setMensagem("Logout realizado com sucesso");
-	            login.setToken(token);
+	            login.put("operacao","logout");
+	            login.put("status",200);
+	            login.put("mensagem", "Logout realizado com sucesso");
 	            return login;
 	        } else {
-	            Login login = new Login();
-	            login.setOperacao("logout");
-	            login.setStatus(401);
-	            login.setMensagem("Candidato não encontrado");
+	            login.put("operacao","logout");
+	            login.put("status",401);
+	            login.put("mensagem", "Candidato não encontrado");
 	            return login;
 	        }
 	    } finally {

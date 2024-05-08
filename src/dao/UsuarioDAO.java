@@ -20,7 +20,7 @@ public class UsuarioDAO {
 			st = this.conn.prepareStatement("INSERT INTO candidato (nome, email, senha) VALUES(?,?,?)");
 			st.setString(1, usuario.getNome());
 			st.setString(2, usuario.getEmail());
-			st.setInt(3, usuario.getSenha());
+			st.setString(3, usuario.getSenha());
 
 			st.executeUpdate();	
 
@@ -142,7 +142,8 @@ public class UsuarioDAO {
 			if (rs.next()) {
 				Usuario usuario = new Usuario();
 				usuario.setNome(rs.getString("nome"));
-				usuario.setSenha(rs.getInt("senha"));
+				usuario.setSenha(rs.getString("senha"));
+				usuario.setEmail(rs.getString("email"));
 				return usuario;
 			}
 		} finally {
