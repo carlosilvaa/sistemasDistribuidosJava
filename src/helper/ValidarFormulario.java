@@ -58,7 +58,7 @@ public class ValidarFormulario {
         JSONObject response = new JSONObject();
 
         try {
-            String senha = String.valueOf(request.getInt("senha"));
+            String senha = String.valueOf(request.getString("senha"));
             if (senha == null || senha.length() < 3 || senha.length() >= 8) {
                 response.put("operacao", operacao);
                 response.put("status", 404);

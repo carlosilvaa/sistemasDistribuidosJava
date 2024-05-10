@@ -56,7 +56,7 @@ public class Cliente {
 					json.put("operacao", "atualizarCandidato");
 					json.put("nome", "UsuarioAtualizado");
 					json.put("email", "pedro@gmail.com");
-					json.put("senha", 12345);
+					json.put("senha", 1234);
 
 					out.println(json.toString());
 					System.out.println("Resposta do servidor: " + in.readLine());
@@ -76,12 +76,14 @@ public class Cliente {
 					json.put("operacao", "loginCandidato");
 					json.put("email", "pedro@gmail.com");
 					json.put("senha", 1234);
-
+					
+					
 					out.println(json.toString());
-					System.out.println("Resposta do servidor: " + in.readLine());
+					String response = in.readLine();
+					System.out.println("Resposta do servidor: " + response);
 
 					try {
-						token = new JSONObject(json).getString("token");
+						token = new JSONObject(response).getString("token");
 					} catch (JSONException ex) {
 						System.out.println("Erro ao tentar resgatar token");
 					}

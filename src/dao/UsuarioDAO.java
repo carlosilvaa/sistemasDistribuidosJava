@@ -74,7 +74,7 @@ public class UsuarioDAO {
 		return success;
 	}
 
-	public boolean editarCandidato(String email, String novoNome, Integer novaSenha) throws SQLException {
+	public boolean editarCandidato(String email, String novoNome, String senha) throws SQLException {
 		boolean candidatoExiste = verificarUsuario(email);
 
 		if (candidatoExiste) {
@@ -83,7 +83,7 @@ public class UsuarioDAO {
 				String sql = "UPDATE candidato SET nome =?, senha =? WHERE email =?";
 				st = conn.prepareStatement(sql);
 				st.setString(1, novoNome);
-				st.setInt(2, novaSenha);
+				st.setString(2, senha);
 				st.setString(3, email);
 				int rowsAffected = st.executeUpdate();
 

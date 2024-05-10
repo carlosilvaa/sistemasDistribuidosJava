@@ -20,7 +20,7 @@ public class LoginController {
 	
 	public JSONObject loginCandidato(JSONObject json) {
 		String email = json.getString("email");
-		String senha = String.valueOf(json.getInt("senha"));
+		String senha = String.valueOf(json.getString("senha"));
 		JSONObject responseValidacao = new JSONObject();
 		
 		boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");

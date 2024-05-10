@@ -173,7 +173,7 @@ public class UsuarioController {
 
 		try {
 			String nome = json.getString("nome");
-			int senha = json.getInt("senha");
+			String senha = json.getString("senha");
 			String email = json.getString("email");
 
 			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
