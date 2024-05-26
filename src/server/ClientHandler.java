@@ -23,13 +23,14 @@ public class ClientHandler extends Thread {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
             String line;
+            UsuarioRotas usuarioRotas = new UsuarioRotas(this.conn);
             while ((line = in.readLine()) != null) {
                 System.out.println("Recebido do cliente: " + line);
                 if ("exit".equalsIgnoreCase(line)) {
                     out.println("Conexão encerrada.");
                     break;
                 }
-                JSONObject response = new UsuarioRotas(this.conn, new JSONObject(line)).handleRequest();
+                JSONObject response = usuarioRotas.handleRequest(new JSONObject(line));
                 out.println(response.toString());
             }
         } catch (IOException e) {

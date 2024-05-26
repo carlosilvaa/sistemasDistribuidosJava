@@ -30,28 +30,43 @@ public class UsuarioDAO {
 	}
 
 	public int excluirCandidato(String email) throws SQLException {
-		PreparedStatement st = null;
-		ResultSet rs = null;
+	    PreparedStatement selectStatement = null;
+	    PreparedStatement deleteLoginStatement = null;
+	    PreparedStatement deleteCandidatoStatement = null;
+	    ResultSet rs = null;
 
-		try {
-			st = conn.prepareStatement("SELECT idCandidato FROM candidato WHERE email = ?");
-			st.setString(1, email);
-			rs = st.executeQuery();
+	    try {
+	        // Seleciona o idCandidato baseado no email
+	        selectStatement = conn.prepareStatement("SELECT idCandidato FROM candidato WHERE email = ?");
+	        selectStatement.setString(1, email);
+	        rs = selectStatement.executeQuery();
 
-			if (rs.next()) {
-				int id = rs.getInt("idCandidato");
-				st = conn.prepareStatement("DELETE FROM candidato WHERE idCandidato =?");
-				st.setInt(1, id);
-				int returnDelete = st.executeUpdate();
-				return returnDelete;
-			} else {
-				return 0; // Candidato não encontrado
-			}
-		} finally {
-			BancoDados.finalizarStatement(st);
-			BancoDados.finalizarResultSet(rs);
-		}
+	        if (rs.next()) {
+	            int id = rs.getInt("idCandidato");
+	            System.out.println("ID do candidato a ser excluído: " + id);
+
+	            // Excluir registros relacionados na tabela logincandidato
+	            deleteLoginStatement = conn.prepareStatement("DELETE FROM logincandidato WHERE idCandidato = ?");
+	            deleteLoginStatement.setInt(1, id);
+	            deleteLoginStatement.executeUpdate();
+
+	            // Excluir o candidato na tabela candidato
+	            deleteCandidatoStatement = conn.prepareStatement("DELETE FROM candidato WHERE idCandidato = ?");
+	            deleteCandidatoStatement.setInt(1, id);
+	            int returnDelete = deleteCandidatoStatement.executeUpdate();
+	            return returnDelete;
+	        } else {
+	            System.out.println("Candidato com email " + email + " não encontrado.");
+	            return 0;
+	        }
+	    } finally {
+	        BancoDados.finalizarStatement(selectStatement);
+	        BancoDados.finalizarStatement(deleteLoginStatement);
+	        BancoDados.finalizarStatement(deleteCandidatoStatement);
+	        BancoDados.finalizarResultSet(rs);
+	    }
 	}
+
 
 	public boolean verificarUsuario(String email) throws SQLException {
 		PreparedStatement st = null;

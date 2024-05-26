@@ -4,36 +4,30 @@ import entities.Usuario;
 import helper.ValidarFormulario;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.UUID;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import dao.LoginDAO;
 import dao.UsuarioDAO;
 
 public class UsuarioController {
 
 	private UsuarioDAO usuarioDAO;
-	private JSONObject request;
 	private LoginDAO loginDAO;
 
-	public UsuarioController(Usuario usuario, Connection conn, JSONObject request) {
+	public UsuarioController(Usuario usuario, Connection conn) {
 		this.usuarioDAO = new UsuarioDAO(conn);
-		this.request = request;
 
 	}
 
 	public UsuarioController() {
 	}
 
-	public JSONObject cadastrarCandidato(JSONObject json) {
+	public JSONObject cadastrarCandidato(JSONObject request) {
 		JSONObject responseValidacao = new JSONObject();
 
 		try {
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+			boolean hasKeys = ValidarFormulario.checarChaves(request, "nome", "email", "senha");
 			if (!hasKeys) {
 				responseValidacao.put("operacao", "loginCandidato");
 				responseValidacao.put("status", 401);
@@ -41,24 +35,24 @@ public class UsuarioController {
 				return responseValidacao;
 			}
 
-			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "loginCandidato");
+			JSONObject responseEmail = ValidarFormulario.checarEmail(request, "loginCandidato");
 			if (responseEmail.getInt("status") != 200) {
 				return responseEmail;
 			}
-
-			JSONObject responseNome = ValidarFormulario.checarNome(this.request, "loginCandidato");
+			System.out.println("responseEmail" + responseEmail);
+			JSONObject responseNome = ValidarFormulario.checarNome(request, "loginCandidato");
 			if (responseNome.has("status") && responseNome.getInt("status") != 200) {
 				return responseNome;
 			}
 
-			JSONObject responseSenha = ValidarFormulario.checarSenha(this.request, "loginCandidato");
+			JSONObject responseSenha = ValidarFormulario.checarSenha(request, "loginCandidato");
 			if (responseSenha.has("status") && responseSenha.getInt("status") != 200) {
 				return responseSenha;
 			}
 
 			Usuario usuario;
 			try {
-				usuario = this.usuarioDAO.buscarPorEmail(this.request.getString("email"));
+				usuario = this.usuarioDAO.buscarPorEmail(request.getString("email"));
 			} catch (SQLException ex) {
 				responseValidacao.put("operacao", "cadastrarCandidato");
 				responseValidacao.put("status", 500);
@@ -69,9 +63,9 @@ public class UsuarioController {
 
 			if (usuario == null) {
 				Usuario newCandidato = new Usuario();
-				newCandidato.setEmail(this.request.getString("email"));
-				newCandidato.setNome(this.request.getString("nome"));
-				newCandidato.setSenha(this.request.getString("senha"));
+				newCandidato.setEmail(request.getString("email"));
+				newCandidato.setNome(request.getString("nome"));
+				newCandidato.setSenha(request.getString("senha"));
 
 				try {
 					this.usuarioDAO.cadastrarCandidato(newCandidato);
@@ -106,14 +100,14 @@ public class UsuarioController {
 		}
 	}
 
-	public JSONObject realizarLogin(JSONObject json) throws SQLException {
+	public JSONObject realizarLogin(JSONObject request) throws SQLException {
 		JSONObject responseValidacao = new JSONObject();
 
 		try {
-			String nome = json.getString("nome");
-			String senha = json.getString("senha");
+			String nome = request.getString("nome");
+			String senha = request.getString("senha");
 
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+			boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "senha");
 			if (!hasKeys) {
 				responseValidacao.put("operacao", "loginCandidato");
 				responseValidacao.put("status", 401);
@@ -121,12 +115,12 @@ public class UsuarioController {
 				return responseValidacao;
 			}
 
-			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "loginCandidato");
+			JSONObject responseEmail = ValidarFormulario.checarEmail(request, "loginCandidato");
 			if (responseEmail.getInt("status") != 200) {
 				return responseEmail;
 			}
 
-			JSONObject responseSenha = ValidarFormulario.checarSenha(this.request, "loginCandidato");
+			JSONObject responseSenha = ValidarFormulario.checarSenha(request, "loginCandidato");
 			if (responseSenha.has("status") && responseSenha.getInt("status") != 200) {
 				return responseSenha;
 			}
@@ -138,45 +132,56 @@ public class UsuarioController {
 		}
 	}
 
-	public JSONObject excluirCandidato(JSONObject json) {
-		JSONObject responseValidacao = new JSONObject();
+	public JSONObject excluirCandidato(JSONObject request) {
+	    JSONObject responseValidacao = new JSONObject();
 
-		try {
-			String email = json.getString("email");
+	    try {
+	        String email = request.getString("email");
 
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email");
-			if (!hasKeys) {
-				responseValidacao.put("operacao", "apagarCandidato");
-				responseValidacao.put("status", 401);
-				responseValidacao.put("mensagem", "Informe todos os campos");
-				return responseValidacao;
-			}
+	        System.out.println("Email recebido: " + email);
 
-			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "loginCandidato");
-			if (responseEmail.getInt("status") != 200) {
-				return responseEmail;
-			}
+	        boolean hasKeys = ValidarFormulario.checarChaves(request, "email");
+	        if (!hasKeys) {
+	            responseValidacao.put("operacao", "apagarCandidato");
+	            responseValidacao.put("status", 401);
+	            responseValidacao.put("mensagem", "Informe todos os campos");
+	            return responseValidacao;
+	        }
 
-			try {
-				usuarioDAO.excluirCandidato(email);
-				return successResponse("apagarCandidato", "Candidato excluído com sucesso!");
-			} catch (SQLException e) {
-				return errorResponse("apagarCandidato", "Erro ao excluir candidato", 500);
-			}
-		} catch (JSONException e) {
-			return errorResponse("excluirCandidato", "JSON inválido", 404);
-		}
+	        JSONObject responseEmail = ValidarFormulario.checarEmail(request, "apagarCandidato");
+	        if (responseEmail.getInt("status") != 200) {
+	            return responseEmail;
+	        }
+
+	        System.out.println("Validação de email bem-sucedida para: " + email);
+
+	        try {
+	            int resultado = usuarioDAO.excluirCandidato(email);
+	            if (resultado > 0) {
+	                return successResponse("apagarCandidato", "Candidato excluído com sucesso!");
+	            } else {
+	                return errorResponse("apagarCandidato", "Candidato não encontrado", 404);
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace(); // Adicione isso para ver o stack trace do SQLException
+	            return errorResponse("apagarCandidato", "Erro ao excluir candidato", 500);
+	        }
+	    } catch (JSONException e) {
+	        e.printStackTrace(); // Adicione isso para ver o stack trace do JSONException
+	        return errorResponse("apagarCandidato", "JSON inválido", 404);
+	    }
 	}
 
-	public JSONObject editarCandidato(JSONObject json) {
+
+	public JSONObject editarCandidato(JSONObject request) {
 		JSONObject responseValidacao = new JSONObject();
 
 		try {
-			String nome = json.getString("nome");
-			String senha = json.getString("senha");
-			String email = json.getString("email");
+			String nome = request.getString("nome");
+			String senha = request.getString("senha");
+			String email = request.getString("email");
 
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email", "senha");
+			boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "senha");
 			if (!hasKeys) {
 				responseValidacao.put("operacao", "loginCandidato");
 				responseValidacao.put("status", 401);
@@ -184,17 +189,17 @@ public class UsuarioController {
 				return responseValidacao;
 			}
 
-			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "loginCandidato");
+			JSONObject responseEmail = ValidarFormulario.checarEmail(request, "loginCandidato");
 			if (responseEmail.getInt("status") != 200) {
 				return responseEmail;
 			}
 
-			JSONObject responseNome = ValidarFormulario.checarNome(this.request, "loginCandidato");
+			JSONObject responseNome = ValidarFormulario.checarNome(request, "loginCandidato");
 			if (responseNome.has("status") && responseNome.getInt("status") != 200) {
 				return responseNome;
 			}
 
-			JSONObject responseSenha = ValidarFormulario.checarSenha(this.request, "loginCandidato");
+			JSONObject responseSenha = ValidarFormulario.checarSenha(request, "loginCandidato");
 			if (responseSenha.has("status") && responseSenha.getInt("status") != 200) {
 				return responseSenha;
 			}
@@ -227,13 +232,13 @@ public class UsuarioController {
 	 * public JSONObject buscarTodos() { JSONObject responseValidacao = new
 	 * JSONObject();
 	 * 
-	 * try { boolean hasKeys = ValidarFormulario.checarChaves(this.request,
+	 * try { boolean hasKeys = ValidarFormulario.checarChaves(request,
 	 * "email"); if (!hasKeys) { responseValidacao.put("operacao",
 	 * "loginCandidato"); responseValidacao.put("status", 401);
 	 * responseValidacao.put("mensagem", "Informe todos os campos"); return
 	 * responseValidacao; }
 	 * 
-	 * JSONObject responseEmail = ValidarFormulario.checarEmail(this.request,
+	 * JSONObject responseEmail = ValidarFormulario.checarEmail(request,
 	 * "loginCandidato"); if (responseEmail.getInt("status") != 200) { return
 	 * responseEmail; }
 	 * 
@@ -250,12 +255,12 @@ public class UsuarioController {
 	 * "JSON inválido", 404); } }
 	 */
 
-	public JSONObject buscarPorEmail(JSONObject json) {
+	public JSONObject buscarPorEmail(JSONObject request) {
 
 		JSONObject responseValidacao = new JSONObject();
 
 		try {
-			boolean hasKeys = ValidarFormulario.checarChaves(this.request, "email");
+			boolean hasKeys = ValidarFormulario.checarChaves(request, "email");
 			if (!hasKeys) {
 				responseValidacao.put("operacao", "loginCandidato");
 				responseValidacao.put("status", 401);
@@ -263,13 +268,13 @@ public class UsuarioController {
 				return responseValidacao;
 			}
 
-			JSONObject responseEmail = ValidarFormulario.checarEmail(this.request, "visualizarCandidato");
+			JSONObject responseEmail = ValidarFormulario.checarEmail(request, "visualizarCandidato");
 			if (responseEmail.getInt("status") != 200) {
 				return responseEmail;
 			}
 
 			try {
-				Usuario usuarios = usuarioDAO.buscarPorEmail(this.request.getString("email"));
+				Usuario usuarios = usuarioDAO.buscarPorEmail(request.getString("email"));
 				if (usuarios != null) {
 					return successResponse("visualizarCandidato", usuarios.getNome(), usuarios.getEmail(),
 							usuarios.getSenha());
@@ -288,7 +293,7 @@ public class UsuarioController {
 	private JSONObject successResponse(String operacao, String message) {
 		JSONObject response = new JSONObject();
 		response.put("operacao", operacao);
-		response.put("status", 200);
+		response.put("status", 201);
 		response.put("mensagem", message);
 		return response;
 	}
@@ -299,14 +304,14 @@ public class UsuarioController {
 		response.put("nome", nome);
 		response.put("email", email);
 		response.put("senha", senha);
-		response.put("status", 200);
+		response.put("status", 201);
 		return response;
 	}
 
 	private JSONObject successResponse(String operacao, String message, String token) {
 		JSONObject response = new JSONObject();
 		response.put("operacao", operacao);
-		response.put("status", 200);
+		response.put("status", 201);
 		response.put("token", token);
 		return response;
 	}

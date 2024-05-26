@@ -59,7 +59,7 @@ public class ValidarFormulario {
 
         try {
             String senha = String.valueOf(request.getString("senha"));
-            if (senha == null || senha.length() < 3 || senha.length() >= 8) {
+            if (senha == null || senha.length() < 3 || senha.length() > 8) {
                 response.put("operacao", operacao);
                 response.put("status", 404);
                 response.put("mensagem", "Senha deve ser de 3 a 8 caracteres");
@@ -69,7 +69,7 @@ public class ValidarFormulario {
             try {
                 response.put("operacao", operacao);
                 response.put("status", 404);
-                response.put("mensagem", "Senha deve ser numérica");
+                response.put("mensagem", "Senha deve ser uma string");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -86,13 +86,50 @@ public class ValidarFormulario {
 
         return true;
     }
+    
+    public static JSONObject checarCnpj(JSONObject request, String operacao) {
+        JSONObject responseJson = new JSONObject();
+
+        try {
+        	if (!validarCNPJ(request.getString("cnpj"))) {
+        		responseJson.put("operacao", operacao);
+        		responseJson.put("status", 404);
+        		responseJson.put("mensagem", "CNPJ inválido");
+
+	            return responseJson;
+	        }
+        } catch (JSONException ex) {
+            responseJson.put("operacao", operacao);
+            responseJson.put("status", 404);
+            responseJson.put("mensagem", "Cnpj deve ser String");
+
+            return responseJson;
+        }
+
+        return responseJson;
+    }
 
     public static boolean validarEmail(String email) {
-        if (email == null || email.length() < 7 || email.length() >= 50) {
+        if (email == null) {
             return false;
         }
-        String validacaoEmail = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        String validacaoEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        if (email.length() < 7 || email.length() >= 50) {
+            return false;
+        }
         return email.matches(validacaoEmail);
+    }
+    
+    public static boolean validarCNPJ(String cnpj) {
+    	if(cnpj == null) {
+    		return false;
+    	}
+    	String regex = "^[0-9]{14}$";
+
+        if (cnpj == null || !cnpj.matches(regex)) {
+            return false;
+        }
+        return cnpj.matches(regex);
     }
 	
 	
