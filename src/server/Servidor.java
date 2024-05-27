@@ -13,7 +13,7 @@ public class Servidor {
 			System.out.println("Servidor iniciado na porta 22222.");
 			String url = "jdbc:mysql://localhost:3306/sistemasdistribuidos";
 			String user = "root";
-			String password = "umasenhaponto";
+			String password = "";
 			Connection conn = DriverManager.getConnection(url, user, password);
 			while (true) {
 				Socket clientSocket = serverSocket.accept();

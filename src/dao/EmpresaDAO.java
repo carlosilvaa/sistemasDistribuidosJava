@@ -59,15 +59,15 @@ public class EmpresaDAO {
         }
     }
 
-    public boolean verificarEmpresa(String cnpj) throws SQLException {
+    public boolean verificarEmpresa(String email) throws SQLException {
         PreparedStatement st = null;
         ResultSet rs = null;
         boolean success = false;
 
         try {
-            String sql = "SELECT * FROM empresa WHERE cnpj = ?";
+            String sql = "SELECT * FROM empresa WHERE email = ?";
             st = conn.prepareStatement(sql);
-            st.setString(1, cnpj);
+            st.setString(1, email);
             rs = st.executeQuery();
 
             if (rs.next()) {
@@ -80,19 +80,20 @@ public class EmpresaDAO {
         return success;
     }
 
-    public boolean editarEmpresa(String cnpj, String novaRazaoSocial, String senha, String descricao, String ramo) throws SQLException {
-        boolean empresaExiste = verificarEmpresa(cnpj);
+    public boolean editarEmpresa(String cnpj, String email, String novaRazaoSocial, String senha, String descricao, String ramo) throws SQLException {
+        boolean empresaExiste = verificarEmpresa(email);
 
         if (empresaExiste) {
             PreparedStatement st = null;
             try {
-                String sql = "UPDATE empresa SET razaoSocial =?, senha =?, descricao =?, ramo =? WHERE cnpj =?";
+                String sql = "UPDATE empresa SET razaoSocial =?, senha =?, descricao =?, ramo =?, cnpj =? WHERE email =?";
                 st = conn.prepareStatement(sql);
                 st.setString(1, novaRazaoSocial);
                 st.setString(2, senha);
                 st.setString(3, descricao);
                 st.setString(4, ramo);
                 st.setString(5, cnpj);
+                st.setString(6, email);
                 int rowsAffected = st.executeUpdate();
 
                 if (rowsAffected > 0) {

@@ -108,8 +108,9 @@ public class EmpresaController {
             String senha = request.getString("senha");
             String descricao = request.getString("descricao");
             String ramo = request.getString("ramo");
+            String email = request.getString("email");
 
-            boolean sucesso = this.empresaDAO.editarEmpresa(cnpj, novaRazaoSocial, senha, descricao, ramo);
+            boolean sucesso = this.empresaDAO.editarEmpresa(cnpj, email, novaRazaoSocial, senha, descricao, ramo);
             if (sucesso) {
                 return successResponse("atualizarEmpresa", "Empresa editada com sucesso");
             } else {

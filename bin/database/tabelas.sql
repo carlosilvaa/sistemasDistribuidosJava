@@ -1,11 +1,11 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
+﻿-- phpMyAdmin SQL Dump
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 29-Abr-2024 às 03:30
--- Versão do servidor: 10.4.28-MariaDB
--- versão do PHP: 8.2.4
+-- Tempo de geração: 28-Maio-2024 às 00:47
+-- Versão do servidor: 10.4.27-MariaDB
+-- versão do PHP: 8.2.0
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -31,7 +31,7 @@ CREATE TABLE `candidato` (
   `idCandidato` int(11) NOT NULL,
   `nome` varchar(30) NOT NULL,
   `email` varchar(50) NOT NULL,
-  `senha` int(11) NOT NULL
+  `senha` varchar(8) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -39,7 +39,10 @@ CREATE TABLE `candidato` (
 --
 
 INSERT INTO `candidato` (`idCandidato`, `nome`, `email`, `senha`) VALUES
-(3, 'Pedrooo', 'pedro@gmail.com', 1234);
+(11, 'UsuarioAtualizado', 'duda@gmail.com', '12345'),
+(15, 'teste123', 'teste@teste.com', '12345'),
+(16, 'josericardo', 'teste@teste123.com', '14680'),
+(18, 'luizhagy', 'hagy@email.com', '12345');
 
 -- --------------------------------------------------------
 
@@ -88,8 +91,8 @@ CREATE TABLE `empresa` (
   `idEmpresa` int(11) NOT NULL,
   `razaoSocial` varchar(30) DEFAULT NULL,
   `email` varchar(50) NOT NULL,
-  `senha` int(11) NOT NULL,
-  `cnpj` int(11) NOT NULL,
+  `senha` varchar(14) NOT NULL,
+  `cnpj` varchar(14) NOT NULL,
   `ramo` varchar(255) DEFAULT NULL,
   `descricao` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -105,6 +108,28 @@ CREATE TABLE `logincandidato` (
   `idCandidato` int(11) NOT NULL,
   `token` varchar(200) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `loginempresa`
+--
+
+CREATE TABLE `loginempresa` (
+  `idLoginEmpresa` int(11) NOT NULL,
+  `idEmpresa` int(11) NOT NULL,
+  `token` varchar(200) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Extraindo dados da tabela `loginempresa`
+--
+
+INSERT INTO `loginempresa` (`idLoginEmpresa`, `idEmpresa`, `token`) VALUES
+(1, 1, 'c73427f4-9869-4abd-9f39-d011ac60d2f8'),
+(4, 2, 'ea2df883-6320-4624-91ff-6868561e8e73'),
+(5, 2, 'c4e24101-3c30-405c-ac5e-30ac32940a2f'),
+(6, 2, '3afd313b-aeba-4adb-90d8-1b132b63f560');
 
 -- --------------------------------------------------------
 
@@ -179,6 +204,12 @@ ALTER TABLE `logincandidato`
   ADD KEY `idCandidato` (`idCandidato`);
 
 --
+-- Índices para tabela `loginempresa`
+--
+ALTER TABLE `loginempresa`
+  ADD PRIMARY KEY (`idLoginEmpresa`);
+
+--
 -- Índices para tabela `vaga`
 --
 ALTER TABLE `vaga`
@@ -201,7 +232,7 @@ ALTER TABLE `vagacompetencia`
 -- AUTO_INCREMENT de tabela `candidato`
 --
 ALTER TABLE `candidato`
-  MODIFY `idCandidato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idCandidato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de tabela `candidatocompetencia`
@@ -225,13 +256,19 @@ ALTER TABLE `competencia`
 -- AUTO_INCREMENT de tabela `empresa`
 --
 ALTER TABLE `empresa`
-  MODIFY `idEmpresa` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idEmpresa` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de tabela `logincandidato`
 --
 ALTER TABLE `logincandidato`
-  MODIFY `idLoginCandidato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `idLoginCandidato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT de tabela `loginempresa`
+--
+ALTER TABLE `loginempresa`
+  MODIFY `idLoginEmpresa` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `vaga`
