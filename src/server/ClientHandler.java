@@ -35,7 +35,7 @@ public class ClientHandler extends Thread {
                 out.println(response.toString());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.out.println("Cliente Desconectado!");
         } finally {
             try {
                 clientSocket.close();
