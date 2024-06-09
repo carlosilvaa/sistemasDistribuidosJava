@@ -2,54 +2,97 @@ package controllers;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.UUID;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 import dao.LoginDAO;
 import dao.UsuarioDAO;
+import entities.Login;
+import entities.Usuario;
 import helper.ValidarFormulario;
 
 public class LoginController {
 	private LoginDAO loginDao;
+	private UsuarioDAO usuarioDAO;
 
 	public LoginController(Connection conn) {
 		new UsuarioDAO(conn);
 		this.loginDao = new LoginDAO(conn);
+		this.usuarioDAO = new UsuarioDAO(conn);
 	}
 
-	public JSONObject loginCandidato(JSONObject request) {
-		String email = request.getString("email");
-		String senha = String.valueOf(request.getString("senha"));
-		JSONObject responseValidacao = new JSONObject();
+	public JSONObject loginCandidato(JSONObject request) throws JSONException, SQLException {
+	    JSONObject responseJson = new JSONObject();
 
-		boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "senha");
+	    // Valida se informou todas as keys
+	    boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "senha");
+	    if (!hasKeys) {
+	        responseJson.put("operacao", "loginCandidato");
+	        responseJson.put("status", 401);
+	        responseJson.put("mensagem", "Informe todos os campos");
+	        return responseJson;
+	    }
 
-		if (!hasKeys) {
-			responseValidacao.put("operacao", "loginCandidato");
-			responseValidacao.put("status", 401);
-			responseValidacao.put("mensagem", "Informe todos os campos");
+	    // Valida email
+	    JSONObject responseEmail = ValidarFormulario.checarEmail(request, "loginCandidato");
+	    if (responseEmail.getInt("status") != 200) {
+	        return responseEmail;
+	    }
 
-			return responseValidacao;
-		}
+	    String email = request.getString("email");
+	    String senha = request.getString("senha");
 
-		JSONObject responseEmail;
-		// Validar endereco de email
-		responseEmail = ValidarFormulario.checarEmail(request, "loginCandidato");
-		if (responseEmail.getInt("status") != 200) {
-			return responseEmail;
-		}
+	    Usuario camposLogin = this.usuarioDAO.buscarPorEmail(email);
 
-		try {
-			return loginDao.loginCandidato(email, senha);
-			/*
-			 * if (login != null) { JSONObject responseLogin = new JSONObject();
-			 * responseLogin.put("operacao", "loginCandidato"); responseLogin.put("status",
-			 * 200); responseLogin.put("token", login.getToken()); return responseLogin; }
-			 * else { return errorResponse("loginCandidato", "Email ou senha inválidos"); }
-			 */
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return errorResponse("loginCandidato", "Erro ao buscar usuário", 500);
-		}
+	    if (camposLogin != null) {
+	        try {
+	            if (camposLogin.getSenha().equals(senha)) {
+	                Login loginCandidato = this.loginDao.buscarLoginPorCandidato(camposLogin);
+
+	                if (loginCandidato != null) {
+	                    responseJson.put("operacao", "loginCandidato");
+	                    responseJson.put("status", 200);
+	                    responseJson.put("token", loginCandidato.getToken());
+	                    return responseJson;
+	                }
+
+	                String uuid = UUID.randomUUID().toString();
+	                loginCandidato = new Login();
+	                loginCandidato.setUsuario(camposLogin);
+	                loginCandidato.setToken(uuid);
+
+	                loginDao.loginCandidato(loginCandidato);
+
+	                responseJson.put("operacao", "loginCandidato");
+	                responseJson.put("status", 200);
+	                responseJson.put("token", uuid);
+	                return responseJson;
+	            } else {
+	                responseJson.put("operacao", "loginCandidato");
+	                responseJson.put("status", 401);
+	                responseJson.put("mensagem", "Login ou senha incorretos");
+	                return responseJson;
+	            }
+	        } catch (JSONException ex) {
+	            responseJson.put("operacao", "loginCandidato");
+	            responseJson.put("status", 401);
+	            responseJson.put("mensagem", "Senha deve ser string");
+	            return responseJson;
+	        } catch (Exception ex) {
+	            responseJson.put("operacao", "loginCandidato");
+	            responseJson.put("status", 401);
+	            responseJson.put("mensagem", "Erro ao tentar cadastrar Login Candidato");
+	            return responseJson;
+	        }
+	    } else {
+	        responseJson.put("operacao", "loginCandidato");
+	        responseJson.put("status", 401);
+	        responseJson.put("mensagem", "Login ou senha incorretos");
+	        return responseJson;
+	    }
 	}
+
 
 	public JSONObject logoutCandidato(JSONObject request) {
 		String token = request.getString("token");

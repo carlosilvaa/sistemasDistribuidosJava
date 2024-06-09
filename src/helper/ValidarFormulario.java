@@ -108,6 +108,24 @@ public class ValidarFormulario {
 
         return responseJson;
     }
+    
+    public static JSONObject checarToken(String token, String operacao) {
+        JSONObject response = new JSONObject();
+
+        if (token == null || token.isEmpty()) {
+            try {
+                response.put("operacao", operacao);
+                response.put("status", 401);
+                response.put("mensagem", "Token não fornecido");
+
+                return response;
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return null;
+    }
 
     public static boolean validarEmail(String email) {
         if (email == null) {

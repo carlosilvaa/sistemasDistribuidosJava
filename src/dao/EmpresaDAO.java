@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import entities.Empresa;
 
 public class EmpresaDAO {
@@ -21,21 +23,21 @@ public class EmpresaDAO {
         PreparedStatement st = null;
         System.out.println("empresaDAO: " + empresa);
         try {
-            st = this.conn.prepareStatement("INSERT INTO empresa (razaoSocial, email, senha, cnpj, ramo, descricao ) VALUES(?,?,?,?,?,?)");
+            st = this.conn.prepareStatement("INSERT INTO empresa (razaoSocial, email, senha, cnpj, ramo, descricao) VALUES(?,?,?,?,?,?)");
             st.setString(1, empresa.getRazaoSocial());
             st.setString(2, empresa.getEmail());
             st.setString(3, empresa.getSenha());
             st.setString(4, empresa.getCNPJ());
             st.setString(5, empresa.getRamo());
             st.setString(6, empresa.getDescricao());
-            st.executeUpdate();	
-
+            st.executeUpdate();
         } finally {
             BancoDados.finalizarStatement(st);
         }
     }
 
     public int excluirEmpresa(String email) throws SQLException {
+        
         PreparedStatement st = null;
         ResultSet rs = null;
 
@@ -79,8 +81,38 @@ public class EmpresaDAO {
         }
         return success;
     }
+    
+    public String verificarToken(JSONObject request) throws SQLException {
+        String token = request.getString("token");
+        String email = request.getString("email");
+        String operacao = request.getString("operacao");
+
+        PreparedStatement st = null;
+        ResultSet rs = null;
+
+        try {
+            st = conn.prepareStatement("SELECT 1 FROM loginempresa WHERE token =? AND email =?");
+            st.setString(1, token);
+            st.setString(2, email);
+            rs = st.executeQuery();
+
+            if (rs.next()) {
+                return "sucesso";
+            } else {
+                JSONObject responseJson = new JSONObject();
+                responseJson.put("operacao", operacao);
+                responseJson.put("status", 404);
+                responseJson.put("mensagem", "Token inválido");
+                return responseJson.toString();
+            }
+        } finally {
+            BancoDados.finalizarStatement(st);
+            BancoDados.finalizarResultSet(rs);
+        }
+    }
 
     public boolean editarEmpresa(String cnpj, String email, String novaRazaoSocial, String senha, String descricao, String ramo) throws SQLException {
+        
         boolean empresaExiste = verificarEmpresa(email);
 
         if (empresaExiste) {
@@ -96,13 +128,9 @@ public class EmpresaDAO {
                 st.setString(6, email);
                 int rowsAffected = st.executeUpdate();
 
-                if (rowsAffected > 0) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return rowsAffected > 0;
             } finally {
-               BancoDados.finalizarStatement(st);
+                BancoDados.finalizarStatement(st);
             }
         } else {
             System.out.println("{\"operacao\": \"editarEmpresa\", \"status\": 404, \"mensagem\": \"Empresa não encontrada\"}");
@@ -122,7 +150,6 @@ public class EmpresaDAO {
 
             while (rs.next()) {
                 Empresa empresa = new Empresa();
-
                 empresa.setId(rs.getInt("idEmpresa"));
                 empresa.setRazaoSocial(rs.getString("razaoSocial"));
                 empresa.setEmail(rs.getString("email"));
@@ -130,12 +157,9 @@ public class EmpresaDAO {
                 empresa.setSenha(rs.getString("senha"));
                 empresa.setDescricao(rs.getString("descricao"));
                 empresa.setRamo(rs.getString("ramo"));
-
                 listaEmpresas.add(empresa);
-
             }
             return listaEmpresas;
-
         } finally {
             BancoDados.finalizarStatement(st);
             BancoDados.finalizarResultSet(rs);
@@ -166,4 +190,5 @@ public class EmpresaDAO {
         return null;
     }
 
+    
 }

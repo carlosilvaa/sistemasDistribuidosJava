@@ -3,6 +3,8 @@ package server;
 import java.io.*;
 import java.net.Socket;
 import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.json.JSONObject;
 import routes.UsuarioRotas;
 
@@ -34,7 +36,7 @@ public class ClientHandler extends Thread {
                 System.out.println(response);
                 out.println(response.toString());
             }
-        } catch (IOException e) {
+        } catch (IOException | SQLException e ) {
         	System.out.println("Cliente Desconectado!");
         } finally {
             try {

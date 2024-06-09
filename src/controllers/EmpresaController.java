@@ -8,13 +8,10 @@ import java.util.UUID;
 import org.json.JSONException;
 import org.json.JSONObject;
 import dao.EmpresaDAO;
-import dao.LoginDAO;
 
 public class EmpresaController {
 
     private EmpresaDAO empresaDAO;
-    private LoginDAO loginDAO;
-
     public EmpresaController(Connection conn) {
         this.empresaDAO = new EmpresaDAO(conn);
     }
@@ -39,11 +36,6 @@ public class EmpresaController {
 				return responseSenha;
 			}
 			System.out.println("responseSenha" + responseSenha);
-            Empresa empresa = this.empresaDAO.buscarPorEmail(request.getString("email"));
-            if (empresa != null) {
-                return errorResponse("cadastrarEmpresa", "E-mail já cadastrado", 422);
-            }
-            System.out.println("empresa " + empresa);
             
             JSONObject responseCnpj = ValidarFormulario.checarCnpj(request, "loginEmpresa");
 			if (responseCnpj.has("status") && responseCnpj.getInt("status") != 200) {
@@ -72,6 +64,11 @@ public class EmpresaController {
 
     public JSONObject excluirEmpresa(JSONObject request) {
         try {
+        	String response = this.empresaDAO.verificarToken(request);
+            if (!response.equals("sucesso")) {
+                return new JSONObject(response);
+            }
+
             boolean hasKeys = ValidarFormulario.checarChaves(request, "email");
             if (!hasKeys) {
                 return errorResponse("apagarEmpresa", "Informe todos os campos", 401);
@@ -93,6 +90,11 @@ public class EmpresaController {
 
     public JSONObject editarEmpresa(JSONObject request) {
         try {
+        	String response = this.empresaDAO.verificarToken(request);
+            if (!response.equals("sucesso")) {
+                return new JSONObject(response);
+            }
+
             boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "senha", "razaoSocial", "cnpj", "descricao", "ramo");
             if (!hasKeys) {
                 return errorResponse("atualizarEmpresa", "Informe todos os campos", 401);
@@ -125,7 +127,12 @@ public class EmpresaController {
 
     public JSONObject buscarEmpresaPorEmail(JSONObject request) {
         try {
-            boolean hasKeys = ValidarFormulario.checarChaves(request, "email");
+        	String response = this.empresaDAO.verificarToken(request);
+            if (!response.equals("sucesso")) {
+                return new JSONObject(response);
+            }
+
+            boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "token");
             if (!hasKeys) {
                 return errorResponse("visualizarEmpresa", "Informe todos os campos", 401);
             }
@@ -143,6 +150,7 @@ public class EmpresaController {
             return errorResponse("visualizarEmpresa", "JSON inválido", 404);
         }
     }
+
 
     private JSONObject successResponse(String operacao, String message) {
         JSONObject response = new JSONObject();
@@ -181,4 +189,6 @@ public class EmpresaController {
         response.put("mensagem", message);
         return response;
     }
+    
 }
+

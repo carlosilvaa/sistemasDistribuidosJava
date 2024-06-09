@@ -3,170 +3,202 @@ package dao;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.JSONObject;
+
 import entities.Usuario;
 
 public class UsuarioDAO {
 
-	private Connection conn;
+    private Connection conn;
 
-	public UsuarioDAO(Connection conn) {
-		this.conn = conn;
-	}
+    public UsuarioDAO(Connection conn) {
+        this.conn = conn;
+    }
 
-	public void cadastrarCandidato(Usuario usuario) throws SQLException {
-		PreparedStatement st = null;
+    public void cadastrarCandidato(Usuario usuario) throws SQLException {
+    	if (verificarUsuario(usuario.getEmail())) {
+            throw new SQLException("E-mail já cadastrado");
+        }
+    	
+        PreparedStatement st = null;
 
-		try {
-			st = this.conn.prepareStatement("INSERT INTO candidato (nome, email, senha) VALUES(?,?,?)");
-			st.setString(1, usuario.getNome());
-			st.setString(2, usuario.getEmail());
-			st.setString(3, usuario.getSenha());
+        try {
+            st = this.conn.prepareStatement("INSERT INTO candidato (nome, email, senha) VALUES(?,?,?)");
+            st.setString(1, usuario.getNome());
+            st.setString(2, usuario.getEmail());
+            st.setString(3, usuario.getSenha());
+            st.executeUpdate();    
+        } finally {
+            BancoDados.finalizarStatement(st);
+        }
+    }
 
-			st.executeUpdate();	
+    public int excluirCandidato(String email) throws SQLException {
+        PreparedStatement selectStatement = null;
+        PreparedStatement deleteLoginStatement = null;
+        PreparedStatement deleteCandidatoStatement = null;
+        ResultSet rs = null;
 
-		} finally {
-			BancoDados.finalizarStatement(st);
-		}
-	}
+        try {
+            selectStatement = conn.prepareStatement("SELECT idCandidato FROM candidato WHERE email = ?");
+            selectStatement.setString(1, email);
+            rs = selectStatement.executeQuery();
 
-	public int excluirCandidato(String email) throws SQLException {
-	    PreparedStatement selectStatement = null;
-	    PreparedStatement deleteLoginStatement = null;
-	    PreparedStatement deleteCandidatoStatement = null;
-	    ResultSet rs = null;
+            if (rs.next()) {
+                int id = rs.getInt("idCandidato");
+                System.out.println("ID do candidato a ser excluído: " + id);
 
-	    try {
-	        // Seleciona o idCandidato baseado no email
-	        selectStatement = conn.prepareStatement("SELECT idCandidato FROM candidato WHERE email = ?");
-	        selectStatement.setString(1, email);
-	        rs = selectStatement.executeQuery();
+                deleteLoginStatement = conn.prepareStatement("DELETE FROM logincandidato WHERE idCandidato = ?");
+                deleteLoginStatement.setInt(1, id);
+                deleteLoginStatement.executeUpdate();
 
-	        if (rs.next()) {
-	            int id = rs.getInt("idCandidato");
-	            System.out.println("ID do candidato a ser excluído: " + id);
+                deleteCandidatoStatement = conn.prepareStatement("DELETE FROM candidato WHERE idCandidato = ?");
+                deleteCandidatoStatement.setInt(1, id);
+                int returnDelete = deleteCandidatoStatement.executeUpdate();
+                return returnDelete;
+            } else {
+                System.out.println("Candidato com email " + email + " não encontrado.");
+                return 0;
+            }
+        } finally {
+            BancoDados.finalizarStatement(selectStatement);
+            BancoDados.finalizarStatement(deleteLoginStatement);
+            BancoDados.finalizarStatement(deleteCandidatoStatement);
+            BancoDados.finalizarResultSet(rs);
+        }
+    }
 
-	            // Excluir registros relacionados na tabela logincandidato
-	            deleteLoginStatement = conn.prepareStatement("DELETE FROM logincandidato WHERE idCandidato = ?");
-	            deleteLoginStatement.setInt(1, id);
-	            deleteLoginStatement.executeUpdate();
+    public boolean verificarUsuario(String email) throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        boolean success = false;
 
-	            // Excluir o candidato na tabela candidato
-	            deleteCandidatoStatement = conn.prepareStatement("DELETE FROM candidato WHERE idCandidato = ?");
-	            deleteCandidatoStatement.setInt(1, id);
-	            int returnDelete = deleteCandidatoStatement.executeUpdate();
-	            return returnDelete;
-	        } else {
-	            System.out.println("Candidato com email " + email + " não encontrado.");
-	            return 0;
-	        }
-	    } finally {
-	        BancoDados.finalizarStatement(selectStatement);
-	        BancoDados.finalizarStatement(deleteLoginStatement);
-	        BancoDados.finalizarStatement(deleteCandidatoStatement);
-	        BancoDados.finalizarResultSet(rs);
-	    }
-	}
+        try {
+            String sql = "SELECT * FROM candidato WHERE email =?";
+            st = conn.prepareStatement(sql);
+            st.setString(1, email);
+            rs = st.executeQuery();
 
+            if (rs.next()) {
+                success = true;
+            }
+        } finally {
+            BancoDados.finalizarStatement(st);
+            BancoDados.finalizarResultSet(rs);
+        }
+        return success;
+    }
+    
+    public String verificarToken(JSONObject request) throws SQLException {
+        String token = request.getString("token");
+        String email = request.getString("email");
+        String operacao = request.getString("operacao");
 
-	public boolean verificarUsuario(String email) throws SQLException {
-		PreparedStatement st = null;
-		ResultSet rs = null;
-		boolean success = false;
+        PreparedStatement st = null;
+        ResultSet rs = null;
 
-		try {
-			String sql = "SELECT * FROM candidato WHERE email =?";
-			st = conn.prepareStatement(sql);
-			st.setString(1, email);
-			rs = st.executeQuery();
+        try {
+            st = conn.prepareStatement("SELECT 1 FROM logincandidato WHERE token =? AND email =?");
+            st.setString(1, token);
+            st.setString(2, email);
+            rs = st.executeQuery();
 
-			if (rs.next()) {
-				success = true;
-			}
-		} finally {
-			BancoDados.finalizarStatement(st);
-			BancoDados.finalizarResultSet(rs);
-		}
-		return success;
-	}
+            if (rs.next()) {
+                return "sucesso";
+            } else {
+                JSONObject responseJson = new JSONObject();
+                responseJson.put("operacao", operacao);
+                responseJson.put("status", 404);
+                responseJson.put("mensagem", "Token inválido");
+                return responseJson.toString();
+            }
+        } finally {
+            BancoDados.finalizarStatement(st);
+            BancoDados.finalizarResultSet(rs);
+        }
+    }
 
-	public boolean editarCandidato(String email, String novoNome, String senha) throws SQLException {
-		boolean candidatoExiste = verificarUsuario(email);
+    public boolean editarCandidato(String email, String novoNome, String senha) throws SQLException {
+        boolean candidatoExiste = verificarUsuario(email);
 
-		if (candidatoExiste) {
-			PreparedStatement st = null;
-			try {
-				String sql = "UPDATE candidato SET nome =?, senha =? WHERE email =?";
-				st = conn.prepareStatement(sql);
-				st.setString(1, novoNome);
-				st.setString(2, senha);
-				st.setString(3, email);
-				int rowsAffected = st.executeUpdate();
+        if (candidatoExiste) {
+            PreparedStatement st = null;
+            try {
+                String sql = "UPDATE candidato SET nome =?, senha =? WHERE email =?";
+                st = conn.prepareStatement(sql);
+                st.setString(1, novoNome);
+                st.setString(2, senha);
+                st.setString(3, email);
+                int rowsAffected = st.executeUpdate();
 
-				if (rowsAffected > 0) {
-					return true;
-				} else {
-					return false;
-				}
-			} finally {
-				BancoDados.finalizarStatement(st);
-			}
-		} else {
-			System.out.println(
-					"{\"operacao\": \"editarCandidato\", \"status\": 404, \"mensagem\": \"Candidato não encontrado\"}");
-			return false;
-		}
-	}
+                return rowsAffected > 0;
+            } finally {
+                BancoDados.finalizarStatement(st);
+            }
+        } else {
+            System.out.println(
+                "{\"operacao\": \"editarCandidato\", \"status\": 404, \"mensagem\": \"Candidato não encontrado\"}");
+            return false;
+        }
+    }
 
-	public List<Usuario> buscarTodos() throws SQLException {
-		PreparedStatement st = null;
-		ResultSet rs = null;
+    public List<Usuario> buscarTodos() throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
 
-		try {
-			st = conn.prepareStatement("SELECT * FROM candidato");
-			rs = st.executeQuery();
+        try {
+            st = conn.prepareStatement("SELECT * FROM candidato");
+            rs = st.executeQuery();
 
-			List<Usuario> listaUsuarios = new ArrayList<>();
+            List<Usuario> listaUsuarios = new ArrayList<>();
 
-			while (rs.next()) {
-				Usuario usuario = new Usuario();
+            while (rs.next()) {
+                Usuario usuario = new Usuario();
+                usuario.setId(rs.getInt("idCandidato"));
+                usuario.setNome(rs.getString("nome"));
+                usuario.setEmail(rs.getString("email"));
+                listaUsuarios.add(usuario);
+            }
+            return listaUsuarios;
+        } finally {
+            BancoDados.finalizarStatement(st);
+            BancoDados.finalizarResultSet(rs);
+        }
+    }
 
-				usuario.setId(rs.getInt("idCandidato"));
-				usuario.setNome(rs.getString("nome"));
-				usuario.setEmail(rs.getString("email"));
+    public Usuario buscarPorEmail(String email) throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
 
-				listaUsuarios.add(usuario);
+        try {
+            st = conn.prepareStatement("SELECT * FROM candidato WHERE email = ?");
+            st.setString(1, email);
+            rs = st.executeQuery();
 
-			}
-			return listaUsuarios;
+            if (rs.next()) {
+                Usuario usuario = new Usuario();
+                usuario.setNome(rs.getString("nome"));
+                usuario.setSenha(rs.getString("senha"));
+                usuario.setEmail(rs.getString("email"));
+                return usuario;
+            }
+        } finally {
+            BancoDados.finalizarStatement(st);
+            BancoDados.finalizarResultSet(rs);
+        }
+        return null;
+    }
 
-		} finally {
-			BancoDados.finalizarStatement(st);
-			BancoDados.finalizarResultSet(rs);
-		}
-	}
-
-	public Usuario buscarPorEmail(String email) throws SQLException {
-		PreparedStatement st = null;
-		ResultSet rs = null;
-
-		try {
-			st = conn.prepareStatement("SELECT * FROM candidato WHERE email = ?");
-			st.setString(1, email);
-			rs = st.executeQuery();
-
-			if (rs.next()) {
-				Usuario usuario = new Usuario();
-				usuario.setNome(rs.getString("nome"));
-				usuario.setSenha(rs.getString("senha"));
-				usuario.setEmail(rs.getString("email"));
-				return usuario;
-			}
-		} finally {
-			BancoDados.finalizarStatement(st);
-			BancoDados.finalizarResultSet(rs);
-		}
-
-		return null;
-	}
-
+    public void close() {
+        try {
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao fechar conexão: " + e.getMessage());
+        }
+    }
+    
+    
 }

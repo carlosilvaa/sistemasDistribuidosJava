@@ -32,7 +32,9 @@ public class Cliente {
 	public String callServer(JSONObject request) {
 		try {
 			out.println(request.toString());
-			return this.in.readLine();
+			String response = this.in.readLine();
+			System.out.println("Recebido do Sevidor:" + response);
+			return response;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return "Erro ao se comunicar com o servidor";
