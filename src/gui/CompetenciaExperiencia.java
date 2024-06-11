@@ -1,9 +1,15 @@
 package gui;
 
 import cliente.Cliente;
+
+import java.awt.Color;
+import java.awt.Font;
+
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import javax.swing.table.DefaultTableModel;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,6 +25,18 @@ public class CompetenciaExperiencia extends javax.swing.JFrame {
     private boolean flag;
 
     public CompetenciaExperiencia(Cliente cliente, String token, String email) {
+    	try {
+            // Aplicar tema Metal
+        	UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
+            // Customize NimbusLookAndFeel
+            UIManager.put("nimbusBase", new Color(255, 255, 255)); // Set background color to white
+            UIManager.put("nimbusBlueGrey", new Color(137, 177, 177)); // Set blue-grey color to dark grey
+            UIManager.put("controlFont", new Font("Arial", Font.BOLD, 14)); // Set font to Arial bold 14
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
         this.cliente = cliente;
         this.token = token;
         this.email = email;

@@ -31,6 +31,7 @@ public class Cliente {
 
 	public String callServer(JSONObject request) {
 		try {
+			System.out.println("Enviado: "+request);
 			out.println(request.toString());
 			String response = this.in.readLine();
 			System.out.println("Recebido do Sevidor:" + response);

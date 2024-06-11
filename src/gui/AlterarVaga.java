@@ -2,10 +2,16 @@ package gui;
 
 import cliente.Cliente;
 import entities.Competencia;
+
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+
 import org.json.JSONObject;
 
 @SuppressWarnings("serial")
@@ -20,6 +26,18 @@ public class AlterarVaga extends javax.swing.JFrame {
      * Creates new form AlterarVaga2
      */
     public AlterarVaga(Cliente cliente, String email, String token, Vaga vagaView) {
+    	try {
+            // Aplicar tema Metal
+        	UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
+            // Customize NimbusLookAndFeel
+            UIManager.put("nimbusBase", new Color(255, 255, 255)); // Set background color to white
+            UIManager.put("nimbusBlueGrey", new Color(137, 177, 177)); // Set blue-grey color to dark grey
+            UIManager.put("controlFont", new Font("Arial", Font.BOLD, 14)); // Set font to Arial bold 14
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
         this.cliente = cliente;
         this.token = token;
         this.email = email;

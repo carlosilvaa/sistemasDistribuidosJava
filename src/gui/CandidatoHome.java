@@ -3,7 +3,17 @@ package gui;
 
 import cliente.Cliente;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+
 import org.json.JSONObject;
+import javax.swing.GroupLayout.Alignment;
+
+import java.awt.Color;
+import java.awt.Font;
+
+import javax.swing.GroupLayout;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 @SuppressWarnings("serial")
 public class CandidatoHome extends javax.swing.JFrame {
@@ -15,12 +25,24 @@ public class CandidatoHome extends javax.swing.JFrame {
 
 
     public CandidatoHome(Cliente cliente, String usuario, String email, String token) {
+    	try {
+            // Aplicar tema Metal
+        	UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
+            // Customize NimbusLookAndFeel
+            UIManager.put("nimbusBase", new Color(255, 255, 255)); // Set background color to white
+            UIManager.put("nimbusBlueGrey", new Color(137, 177, 177)); // Set blue-grey color to dark grey
+            UIManager.put("controlFont", new Font("Arial", Font.BOLD, 14)); // Set font to Arial bold 14
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
         initComponents();
         this.cliente = cliente;
         this.usuario = usuario;
         this.token = token;
         this.email = email;
-        this.visualizarUsusario(usuario, email);
+        this.visualizarUsusario();
     }
 
     private void initComponents() {
@@ -37,13 +59,14 @@ public class CandidatoHome extends javax.swing.JFrame {
         bttnLogout = new javax.swing.JToggleButton();
         bttnApagar = new javax.swing.JToggleButton();
         btnCompetencias = new javax.swing.JToggleButton();
+        btnVagas = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMaximumSize(null);
         setResizable(false);
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        jLabel1.setText("Bem vindo(a)");
+        jLabel1.setText("Bem vindo Candidato");
 
         pnCandidato.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
@@ -127,6 +150,13 @@ public class CandidatoHome extends javax.swing.JFrame {
                 bttnLogoutActionPerformed(evt);
             }
         });
+        
+        btnVagas.setText("Vagas");
+        btnVagas.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVagasActionPerformed(evt);
+            }
+        });
 
         bttnApagar.setText("Deletar conta");
         bttnApagar.addActionListener(new java.awt.event.ActionListener() {
@@ -158,7 +188,8 @@ public class CandidatoHome extends javax.swing.JFrame {
                     .addComponent(bttnAtualizar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(bttnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(bttnApagar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnCompetencias, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnCompetencias, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnVagas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(20, 20, 20))
         );
         layout.setVerticalGroup(
@@ -172,6 +203,8 @@ public class CandidatoHome extends javax.swing.JFrame {
                         .addComponent(bttnAtualizar)
                         .addGap(18, 18, 18)
                         .addComponent(btnCompetencias)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnVagas)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(bttnLogout)
                         .addGap(18, 18, 18)
@@ -224,6 +257,11 @@ public class CandidatoHome extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(CandidatoHome.this, responseJson.getString("mensagem"), "Erro Logout", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    private void btnVagasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVagasActionPerformed
+        new Vaga(cliente, usuario, email, token).setVisible(true);
+        dispose();
+    }
 
     private void inpNomeActionPerformed(java.awt.event.ActionEvent evt) {
     }//GEN-LAST:event_inpNomeActionPerformed
@@ -245,6 +283,7 @@ public class CandidatoHome extends javax.swing.JFrame {
         JSONObject responseJson = new JSONObject(response);
 
         if (responseJson.getInt("status") == 201) {
+        	JOptionPane.showMessageDialog(CandidatoHome.this, "Usuário apagado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             new Login(this.cliente).setVisible(true);
             dispose();
         } else {
@@ -257,15 +296,17 @@ public class CandidatoHome extends javax.swing.JFrame {
         dispose();
     }//GEN-LAST:event_btnCompetenciasActionPerformed
 
-    private void visualizarUsusario(String usuario, String email) {
+    private void visualizarUsusario() {
         JSONObject request = new JSONObject();
 
-        request.put("operacao", "visualizar" + usuario);
-        request.put("email", email);
-        request.put("token", token);
-
+        request.put("operacao", "visualizar" + this.usuario);
+        request.put("email", this.email);
+        request.put("token", this.token);
+        System.out.println("visualizarUsusario: "+ request);
         String response = this.cliente.callServer(request);
-
+        if(response == null) {
+        	JOptionPane.showMessageDialog(CandidatoHome.this, "Não recebido resposta do servidor", "Erro Visualizar Usuario", JOptionPane.ERROR_MESSAGE);
+        }
         JSONObject responseJson = new JSONObject(response);
         if (responseJson.getInt("status") == 201) {
             this.inpNome.setText(responseJson.getString("nome"));
@@ -289,4 +330,5 @@ public class CandidatoHome extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel pnCandidato;
+    private javax.swing.JButton btnVagas;
 }

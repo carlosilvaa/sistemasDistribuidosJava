@@ -2,6 +2,11 @@ package gui;
 
 import cliente.Cliente;
 import entities.Empresa;
+import javax.swing.UIManager;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+
+import java.awt.Color;
+import java.awt.Font;
 
 import javax.swing.JOptionPane;
 import org.json.JSONObject;
@@ -12,6 +17,18 @@ public class Login extends javax.swing.JFrame {
     private Cliente cliente;
 
     public Login(Cliente cliente) {
+        try {
+            // Aplicar tema Metal
+        	UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
+            // Customize NimbusLookAndFeel
+            UIManager.put("nimbusBase", new Color(255, 255, 255)); // Set background color to white
+            UIManager.put("nimbusBlueGrey", new Color(137, 177, 177)); // Set blue-grey color to dark grey
+            UIManager.put("controlFont", new Font("Arial", Font.BOLD, 14)); // Set font to Arial bold 14
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
         initComponents();
         this.cliente = cliente;
     }
@@ -25,8 +42,10 @@ public class Login extends javax.swing.JFrame {
         rbEmpresa = new javax.swing.JRadioButton();
         jLabel5 = new javax.swing.JLabel();
         inpEmail = new javax.swing.JTextField();
+        inpEmail.setText("duda@email.com");
         jLabel3 = new javax.swing.JLabel();
         inpSenha = new javax.swing.JTextField();
+        inpSenha.setText("senha123");
         bttnCadastrar = new javax.swing.JButton();
         bttnLogar = new javax.swing.JButton();
 
@@ -167,9 +186,9 @@ public class Login extends javax.swing.JFrame {
         JSONObject json = new JSONObject(response);
         if (json.getInt("status") == 200) {
         	if(usuario.equals("Candidato")) {
-        		new window(cliente, usuario, email, json.getString("token")).setVisible(true);
+        		new CandidatoHome(cliente, usuario, email, json.getString("token")).setVisible(true);
         	}else {
-        		new windowEmpresa(cliente, usuario, email, json.getString("token")).setVisible(true);
+        		new EmpresaHome(cliente, usuario, email, json.getString("token")).setVisible(true);
         	}
             dispose();
         } else {

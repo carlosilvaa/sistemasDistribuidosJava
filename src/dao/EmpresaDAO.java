@@ -91,7 +91,7 @@ public class EmpresaDAO {
         ResultSet rs = null;
 
         try {
-            st = conn.prepareStatement("SELECT 1 FROM loginempresa WHERE token =? AND email =?");
+            st = conn.prepareStatement("SELECT 1 FROM loginempresa lc LEFT JOIN empresa c on c.idEmpresa = lc.idEmpresa WHERE lc.token =? AND c.email =?");
             st.setString(1, token);
             st.setString(2, email);
             rs = st.executeQuery();
@@ -175,6 +175,7 @@ public class EmpresaDAO {
             rs = st.executeQuery();
             if (rs.next()) {
                 Empresa empresa = new Empresa();
+                empresa.setId(rs.getInt("idEmpresa"));
                 empresa.setRazaoSocial(rs.getString("razaoSocial"));
                 empresa.setEmail(rs.getString("email"));
                 empresa.setSenha(rs.getString("senha"));

@@ -21,6 +21,8 @@ public class UsuarioRotas {
         this.usuarioController = new UsuarioController(new Usuario(), conn);
         this.empresaController = new EmpresaController(conn);
         this.loginController = new LoginController(conn);
+        this.competenciaExperienciaController = new CompetenciaExperienciaController(conn);
+        this.vagaController = new VagaController(conn);
     }
 
     public JSONObject handleRequest(JSONObject request) throws SQLException {

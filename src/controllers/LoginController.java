@@ -49,7 +49,6 @@ public class LoginController {
 	        try {
 	            if (camposLogin.getSenha().equals(senha)) {
 	                Login loginCandidato = this.loginDao.buscarLoginPorCandidato(camposLogin);
-
 	                if (loginCandidato != null) {
 	                    responseJson.put("operacao", "loginCandidato");
 	                    responseJson.put("status", 200);

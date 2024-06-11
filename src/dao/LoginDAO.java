@@ -21,38 +21,26 @@ public class LoginDAO {
     public JSONObject loginCandidato(Login loginCandidato) throws SQLException, IOException {
         PreparedStatement st = null;
         ResultSet rs = null;
-        Connection conn = null;
-        
         try {
-            conn = BancoDados.conectar();
+        	if(conn == null) {
+        		
+        		conn = BancoDados.conectar();
+        	}
             
-            st = conn.prepareStatement("SELECT idCandidato FROM candidato WHERE email = ? AND senha = ?");
-            st.setString(1, loginCandidato.getEmail());
-            st.setString(2, loginCandidato.getSenha());
-            rs = st.executeQuery();
-            
-            if (rs.next()) {
-                int idCandidato = rs.getInt("idCandidato");
-                String token = UUID.randomUUID().toString();
+            int idCandidato = loginCandidato.getUsuario().getId();
+           
+            st = conn.prepareStatement("INSERT INTO logincandidato (idCandidato, token) VALUES (?, ?)");
+            st.setInt(1, idCandidato);
+            st.setString(2, loginCandidato.getToken());
+            st.executeUpdate();
 
-                st = conn.prepareStatement("INSERT INTO logincandidato (idCandidato, token) VALUES (?, ?)");
-                st.setInt(1, idCandidato);
-                st.setString(2, token);
-                st.executeUpdate();
-
-                JSONObject login = new JSONObject();
-                login.put("operacao", "loginCandidato");
-                login.put("status", 200);
-                login.put("token", token);
-                return login;
-            } else {
-                JSONObject login = new JSONObject();
-                login.put("operacao", "loginCandidato");
-                login.put("status", 401);
-                login.put("mensagem", "Login ou senha incorretos");
-                return login;
-            }
+            JSONObject login = new JSONObject();
+            login.put("operacao", "loginCandidato");
+            login.put("status", 200);
+            login.put("token", loginCandidato.getToken());
+            return login;
         } catch (SQLException ex) {
+        	System.out.println(ex.getMessage());
             throw ex;
         } finally {
             BancoDados.finalizarStatement(st);

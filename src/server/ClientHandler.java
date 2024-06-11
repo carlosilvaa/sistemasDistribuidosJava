@@ -33,7 +33,7 @@ public class ClientHandler extends Thread {
                     break;
                 }
                 JSONObject response = usuarioRotas.handleRequest(new JSONObject(line));
-                System.out.println(response);
+                System.out.println("Enviado: "+ response);
                 out.println(response.toString());
             }
         } catch (IOException | SQLException e ) {

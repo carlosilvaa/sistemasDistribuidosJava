@@ -28,6 +28,7 @@ public class VagaController {
 		this.conn = conn;
 		this.vagaDAO = new VagaDAO(conn);
 		this.empresaDAO = new EmpresaDAO(conn);
+		this.usuarioDAO = new UsuarioDAO(conn);
 	}
 
 	public JSONObject cadastrarVaga(JSONObject request) {
@@ -47,6 +48,13 @@ public class VagaController {
 			return responseEmail;
 		}
 		try {
+			Empresa empresa = this.empresaDAO.buscarPorEmail(request.getString("email"));
+			if(empresa == null) {
+				responseValidacao.put("operacao", "cadastrarVaga");
+				responseValidacao.put("status", 401);
+				responseValidacao.put("mensagem", "Empresa não encontrada");
+				return responseValidacao;
+			}
 			String email = request.getString("email");
 			String nome = request.getString("nome");
 			double faixaSalarial = request.getDouble("faixaSalarial");
@@ -55,18 +63,21 @@ public class VagaController {
 			JSONArray competenciasArray = request.getJSONArray("competencias");
 
 			List<String> competencias = jsonArrayToList(competenciasArray);
-
-			Vaga vaga = new Vaga(request.getString("email").toString());
+			
+			
+			Vaga vaga = new Vaga();
 			vaga.setNome(nome);
 			vaga.setFaixaSalarial(faixaSalarial);
 			vaga.setDescricao(descricao);
 			vaga.setEstado(estado);
 			vaga.setCompetencias(competencias);
-
+			vaga.setEmail(email);
+			System.out.println(vaga);
 			vagaDAO.cadastrarVaga(vaga);
 
 			return successResponse("cadastrarVaga", "Vaga cadastrada com sucesso", 201);
 		} catch (SQLException ex) {
+			System.out.println(ex.getMessage());
 			return errorResponse("cadastrarVaga", "Erro ao cadastrar a vaga", 500);
 		} catch (JSONException e) {
 			return errorResponse("cadastrarVaga", "JSON inválido", 400);
@@ -87,9 +98,9 @@ public class VagaController {
 			if (vaga == null) {
 				return errorResponse("visualizarVaga", "Vaga não encontrada", 404);
 			}
-
 			JSONObject response = new JSONObject();
 			response.put("operacao", "visualizarVaga");
+			response.put("status", 201);
 			response.put("faixaSalarial", vaga.getFaixaSalarial());
 			response.put("descricao", vaga.getDescricao());
 			response.put("estado", vaga.getEstado());
@@ -127,13 +138,14 @@ public class VagaController {
 
 			List<String> competencias = jsonArrayToList(competenciasArray);
 
-			Vaga vaga = new Vaga(request.getString("email").toString());
+			Vaga vaga = new Vaga();
 			vaga.setCodigo(idVaga);
 			vaga.setNome(nome);
 			vaga.setFaixaSalarial(faixaSalarial);
 			vaga.setDescricao(descricao);
 			vaga.setEstado(estado);
 			vaga.setCompetencias(competencias);
+			vaga.setEmail(email);
 
 			vagaDAO.atualizarVaga(vaga, empresa);
 
@@ -260,7 +272,7 @@ public class VagaController {
             return responseEmail;
         }
 
-        String responseToken = this.empresaDAO.verificarToken(request);
+        String responseToken = this.usuarioDAO.verificarToken(request);
         if (!responseToken.equals("sucesso")) {
             return new JSONObject(responseToken);
         }
@@ -280,7 +292,7 @@ public class VagaController {
             JSONArray competencias = filtros.getJSONArray("competencias");
             for (int i = 0; i < competencias.length(); i++) {
                 String comp = competencias.getString(i);
-                where = where + tipo + " v.competencias LIKE \"%" + comp + "%\" ";
+                where = where + tipo + " competencias LIKE \"%" + comp + "%\" ";
             }
 
             List<Vaga> resp = this.vagaDAO.filtrarVagasCandidato(where);
@@ -297,7 +309,7 @@ public class VagaController {
                 novoObjeto.put("estado", vaga.getEstado());
                 novoObjeto.put("idVaga", vaga.getId());
                 novoObjeto.put("nome", vaga.getNome());
-                novoObjeto.put("email", vaga.getEmpresa().getEmail());
+                novoObjeto.put("email", vaga.getEmail());
                 novoObjeto.put("competencias", vaga.getCompetencias());
                 novoObjeto.put("faixaSalarial", vaga.getFaixaSalarial());
                 novoObjeto.put("descricao", vaga.getDescricao());

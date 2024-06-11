@@ -99,7 +99,7 @@ public class UsuarioDAO {
         ResultSet rs = null;
 
         try {
-            st = conn.prepareStatement("SELECT 1 FROM logincandidato WHERE token =? AND email =?");
+            st = conn.prepareStatement("SELECT 1 FROM logincandidato lc LEFT JOIN candidato c on c.idCandidato = lc.idCandidato WHERE lc.token =? AND c.email =?");
             st.setString(1, token);
             st.setString(2, email);
             rs = st.executeQuery();
@@ -113,7 +113,12 @@ public class UsuarioDAO {
                 responseJson.put("mensagem", "Token inválido");
                 return responseJson.toString();
             }
-        } finally {
+        } 
+        catch(Exception ex){
+        	System.out.println(ex.getMessage());
+        	throw ex;
+        }
+        finally {
             BancoDados.finalizarStatement(st);
             BancoDados.finalizarResultSet(rs);
         }
@@ -178,6 +183,7 @@ public class UsuarioDAO {
 
             if (rs.next()) {
                 Usuario usuario = new Usuario();
+                usuario.setId(rs.getInt("idCandidato"));
                 usuario.setNome(rs.getString("nome"));
                 usuario.setSenha(rs.getString("senha"));
                 usuario.setEmail(rs.getString("email"));

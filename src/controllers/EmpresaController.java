@@ -127,14 +127,14 @@ public class EmpresaController {
 
     public JSONObject buscarEmpresaPorEmail(JSONObject request) {
         try {
+        	boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "token");
+            if (!hasKeys) {
+                return errorResponse("visualizarEmpresa", "Informe todos os campos", 401);
+            }
+            
         	String response = this.empresaDAO.verificarToken(request);
             if (!response.equals("sucesso")) {
                 return new JSONObject(response);
-            }
-
-            boolean hasKeys = ValidarFormulario.checarChaves(request, "email", "token");
-            if (!hasKeys) {
-                return errorResponse("visualizarEmpresa", "Informe todos os campos", 401);
             }
 
             String email = request.getString("email");

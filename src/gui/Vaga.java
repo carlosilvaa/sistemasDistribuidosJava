@@ -2,10 +2,16 @@ package gui;
 
 import cliente.Cliente;
 import helper.FormatarJSONString;
+
+import java.awt.Color;
+import java.awt.Font;
+
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 @SuppressWarnings("serial")
 public class Vaga extends javax.swing.JFrame {
@@ -16,12 +22,33 @@ public class Vaga extends javax.swing.JFrame {
     private String email;
     
     public Vaga(Cliente cliente, String usuario, String email, String token) {
+    	try {
+            // Aplicar tema Metal
+        	UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
+            // Customize NimbusLookAndFeel
+            UIManager.put("nimbusBase", new Color(255, 255, 255)); // Set background color to white
+            UIManager.put("nimbusBlueGrey", new Color(137, 177, 177)); // Set blue-grey color to dark grey
+            UIManager.put("controlFont", new Font("Arial", Font.BOLD, 14)); // Set font to Arial bold 14
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
         this.cliente = cliente;
         this.usuario = usuario;
         this.token = token;
         this.email = email;
 
         initComponents();
+        
+        try {
+            // Aplicar tema Metal
+            //UIManager.setLookAndFeel(new MetalLookAndFeel());
+             UIManager.setLookAndFeel(new NimbusLookAndFeel());
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
 
         if (usuario.equals("Empresa")) {
             this.btnFiltrar.setVisible(false);
@@ -49,7 +76,7 @@ public class Vaga extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        
         jLabel1.setText("Vagas");
 
         tblVagas.setModel(new javax.swing.table.DefaultTableModel(
@@ -85,8 +112,6 @@ public class Vaga extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tblVagas);
 
-        btnFiltrar.setText("Filtrar");
-
         btnVoltar.setText("Voltar");
         btnVoltar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -98,6 +123,13 @@ public class Vaga extends javax.swing.JFrame {
         btnCadastrar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCadastrarActionPerformed(evt);
+            }
+        });
+        
+        btnFiltrar.setText("Filtrar");
+        btnFiltrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFiltrarActionPerformed(evt);
             }
         });
 
@@ -244,8 +276,57 @@ public class Vaga extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(Vaga.this, responseJSON.getString("mensagem"), "Erro alterar vaga", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    private void btnFiltrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFiltrarActionPerformed
+        new VagaFiltrar(this).setVisible(true);
+    }//GEN-LAST:event_btnFiltrarActionPerformed
+
+    public void visualizarVagasCadidato(JSONObject filtros) {
+
+        JSONObject request = new JSONObject();
+        request.put("operacao", "filtrarVagas");
+        request.put("email", this.email);
+        request.put("token", this.token);
+        request.put("filtros", filtros);
+
+        String response = this.cliente.callServer(request);
+        if (response == null) {
+            JOptionPane.showMessageDialog(Vaga.this, "Resposta não recebida", "Erro ao Filtrar Vagas", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JSONObject responseJSON = new JSONObject(response);
+
+        if (responseJSON.getInt("status") == 201) {
+            DefaultTableModel tblModel = (DefaultTableModel) this.tblVagas.getModel();
+            tblModel.setRowCount(0);
+            JSONArray vagas = responseJSON.getJSONArray("vagas");
+            for (Object vagaObj : vagas) {
+                try {
+                    JSONObject vaga = new JSONObject(vagaObj.toString());
+                    System.out.println(vaga);
+                    tblModel.addRow(new Object[]{
+                        vaga.getInt("idVaga"),
+                        vaga.getString("nome"),
+                        this.email,
+                        vaga.getFloat("faixaSalarial"),
+                        vaga.getString("descricao"),
+                        vaga.getString("estado"),
+                        FormatarJSONString.arrayToJson(vaga.getJSONArray("competencias"))
+                    });
+
+                } catch (Exception ex) {
+                    
+                    JOptionPane.showMessageDialog(Vaga.this, ex.getMessage(), "Erro Filtrar Vaga", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(Vaga.this, responseJSON.getString("mensagem"), "Erro Filtrar Vagas", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     public void visualizarVagasEmpresa() {
+    	
         JSONObject request = new JSONObject();
         request.put("operacao", "listarVagas");
         request.put("email", this.email);

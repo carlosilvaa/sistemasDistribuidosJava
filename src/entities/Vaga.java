@@ -6,7 +6,6 @@ import java.util.List;
 import dao.EmpresaDAO;
 
 public class Vaga {
-
 	private int id;
 	private String nome;
 	private Double faixaSalarial;
@@ -14,17 +13,16 @@ public class Vaga {
 	private String descricao;
 	private String email;
 	private String estado;
-	private EmpresaDAO empresaDAO;
-	private Connection conn;
-	private Empresa empresa;
-
-	public Vaga(String email) throws SQLException {
-
-		this.empresaDAO = new EmpresaDAO(conn);
-		this.email = empresaDAO.buscarPorEmail(email).getEmail();
-	}
 
 	public Vaga() {
+	}
+	
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public int getCodigo() {
@@ -83,19 +81,13 @@ public class Vaga {
 		this.estado = estado;
 	}
 
-	public Empresa getEmpresa() {
-		return empresa;
-	}
-
-	public void setEmpresa(Empresa empresa) {
-		this.empresa = empresa;
-	}
 
 	@Override
 	public String toString() {
 		return "Vaga [id=" + id + ", nome=" + nome + ", faixaSalarial=" + faixaSalarial + ", competencias="
 				+ competencias + ", descricao=" + descricao + ", email=" + email + ", estado=" + estado
-				+ ", empresaDAO=" + empresaDAO + ", conn=" + conn + ", empresa=" + empresa + "]";
+				 + "]";
 	}
+
 
 }

@@ -2,7 +2,14 @@ package gui;
 
 import cliente.Cliente;
 import entities.Competencia;
+
+import java.awt.Color;
+import java.awt.Font;
+
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -15,6 +22,19 @@ public class CadastrarCompetenciaExperiencia extends javax.swing.JPanel {
     public JSONArray competencias;
 
     public CadastrarCompetenciaExperiencia(String email, String token, Cliente cliente) {
+    	try {
+            // Aplicar tema Metal
+        	UIManager.setLookAndFeel(new NimbusLookAndFeel());
+
+            // Customize NimbusLookAndFeel
+            UIManager.put("nimbusBase", new Color(255, 255, 255)); // Set background color to white
+            UIManager.put("nimbusBlueGrey", new Color(137, 177, 177)); // Set blue-grey color to dark grey
+            UIManager.put("controlFont", new Font("Arial", Font.BOLD, 14)); // Set font to Arial bold 14
+            // UIManager.setLookAndFeel(new WindowsLookAndFeel());
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema: " + e.getMessage());
+        }
+    	
         this.email = email;
         this.token = token;
         this.cliente = cliente;
@@ -140,7 +160,6 @@ public class CadastrarCompetenciaExperiencia extends javax.swing.JPanel {
         request.put("email", this.email);
         request.put("token", this.token);
         request.put("competenciaExperiencia", this.competencias);
-        System.out.println("Enviando: " + request);
 
         String response = this.cliente.callServer(request);
         if (response == null) {
